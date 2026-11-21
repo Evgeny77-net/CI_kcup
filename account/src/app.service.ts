@@ -14,7 +14,11 @@ export class AppService {
     return 'Account Service is running';
   }
 
-  async createAccount(email: string, name: string, balance = 100): Promise<Account> {
+  async createAccount(
+    email: string,
+    name: string,
+    balance = 100,
+  ): Promise<Account> {
     const account = this.accountRepo.create({ email, name, balance });
     return this.accountRepo.save(account);
   }

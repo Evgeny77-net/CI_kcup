@@ -26,7 +26,10 @@ describe('AppController', () => {
   });
 
   it('should create a user account', async () => {
-    const user = await appController.create({ email: 'ivan@example.com', name: 'Ivan' });
+    const user = await appController.create({
+      email: 'ivan@example.com',
+      name: 'Ivan',
+    });
     expect(user.email).toBe('ivan@example.com');
   });
 });

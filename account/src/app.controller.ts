@@ -12,7 +12,9 @@ export class AppController {
   }
 
   @Post('accounts')
-  create(@Body() body: { email: string; name: string; balance?: number }): Promise<Account> {
+  create(
+    @Body() body: { email: string; name: string; balance?: number },
+  ): Promise<Account> {
     return this.appService.createAccount(body.email, body.name, body.balance);
   }
 
