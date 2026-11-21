@@ -79,6 +79,7 @@ services:
       REDIS_URL: redis://redis:6379
       KAFKA_BROKERS: kafka:9092
       JWT_SECRET: super-secret-ci-key
+      ACCOUNT_SERVICE_URL: http://account:3001
     depends_on:
       postgres:
         condition: service_healthy

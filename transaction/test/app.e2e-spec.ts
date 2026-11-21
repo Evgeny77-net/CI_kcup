@@ -1,30 +1,41 @@
-describe('Cross-Service E2E: Account Creation', () => {
+describe('Cross-Service E2E: Auth Registration, JWT & Account Sync', () => {
   const accountUrl = process.env.ACCOUNT_SERVICE_URL || 'http://account:3001';
+  const authUrl = process.env.AUTH_SERVICE_URL || 'http://auth:3002';
 
-  it('should create a real user in Account service and persist in Postgres', async () => {
-    const email = `user_${Date.now()}@example.com`;
+  it('should register user in Auth, issue JWT, login, and create Account automatically', async () => {
+    const email = `jwt_user_${Date.now()}@example.com`;
+    const password = 'SecurePassword123!';
 
-    // 1. Отправляем запрос на создание пользователя в сервис account
-    const createRes = await fetch(`${accountUrl}/accounts`, {
+    // 1. Регистрация в сервисе auth
+    const regRes = await fetch(`${authUrl}/auth/register`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        email,
-        name: 'Test User',
-        balance: 500,
-      }),
+      body: JSON.stringify({ email, password, name: 'JWT Student' }),
     });
 
-    expect(createRes.status).toBe(201);
-    const createdUser = await createRes.json();
-    expect(createdUser.id).toBeDefined();
-    expect(createdUser.email).toBe(email);
-    expect(Number(createdUser.balance)).toBe(500);
+    expect(regRes.status).toBe(201);
+    const regData = await regRes.json();
+    expect(regData.accessToken).toBeDefined();
+    expect(regData.accessToken.split('.').length).toBe(3); // Проверка формата JWT (header.payload.signature)
 
-    // 2. Проверяем, что пользователь реально сохранился в БД Postgres
-    const listRes = await fetch(`${accountUrl}/accounts`);
-    expect(listRes.status).toBe(200);
-    const users = await listRes.json();
-    expect(users.some((u: any) => u.email === email)).toBe(true);
+    // 2. Вход (Login) по паролю и получение нового токена
+    const loginRes = await fetch(`${authUrl}/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password }),
+    });
+
+    expect(loginRes.status).toBe(201);
+    const loginData = await loginRes.json();
+    expect(loginData.accessToken).toBeDefined();
+
+    // 3. Проверяем, что сервис account автоматически создал профиль и начислил бонусный баланс 100
+    const accRes = await fetch(`${accountUrl}/accounts`);
+    const accounts = await accRes.json();
+    const createdAccount = accounts.find((a: any) => a.email === email);
+
+    expect(createdAccount).toBeDefined();
+    expect(createdAccount.name).toBe('JWT Student');
+    expect(Number(createdAccount.balance)).toBe(100);
   });
 });
